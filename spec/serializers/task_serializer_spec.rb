@@ -7,8 +7,8 @@ RSpec.describe TaskSerializer, type: :serializer do
   subject { TaskSerializer.new(task).to_json }
 
   specify do
-    names = %({"title":"Foo"})
-    is_expected.to be_json_eql(names).excluding("tags")
+    names = %({"title":"Foo", "tags":[{"name":"Bar"}]})
+    is_expected.to be_json_eql(names)
 
     is_expected.to have_json_path("id")
     is_expected.to have_json_type(Integer).at_path("id")

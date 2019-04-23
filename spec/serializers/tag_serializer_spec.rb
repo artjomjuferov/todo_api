@@ -8,8 +8,6 @@ RSpec.describe TagSerializer, type: :serializer do
   specify do
     names = %({"name":"Bar"})
     is_expected.to be_json_eql(names)
-
-    is_expected.to have_json_path("id")
-    is_expected.to have_json_type(Integer).at_path("id")
+    is_expected.not_to have_json_path('id')
   end
 end

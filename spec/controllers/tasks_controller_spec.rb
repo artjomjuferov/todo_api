@@ -1,6 +1,19 @@
 require 'rails_helper'
 
 RSpec.describe TasksController, type: :controller do
+  shared_examples 'not existing task provided' do
+    specify do
+      body = %({"errors":[{"title":"Task does not exist", "status": "404", "source":{"pointer":"data/id"}}]})
+      expect(subject.body).to be_json_eql(body)
+    end
+  end
+
+  shared_examples "task's blank title" do
+    specify do
+      body = %({"errors":[{"title":"Title can't be blank", "status": "422", "source":{"pointer":"data/attributes/title"}}]})
+      expect(subject.body).to be_json_eql(body)
+    end
+  end
 
   describe 'POST #create' do
     let(:subject) { post :create, params: {title: title} }
@@ -8,10 +21,7 @@ RSpec.describe TasksController, type: :controller do
     context 'with invalid input data' do
       let(:title) { '' }
 
-      specify do
-        expect { subject }.not_to change(Task, :count)
-        expect(response.status).to eq 422
-      end
+      it_behaves_like "task's blank title"
     end
 
     context 'with correct input data' do
@@ -33,19 +43,13 @@ RSpec.describe TasksController, type: :controller do
       let(:task) { double(id: -1) }
       let(:title) { 'Bar' }
 
-      specify do
-        subject
-        expect(response.status).to eq 404
-      end
+      it_behaves_like 'not existing task provided'
     end
 
     context 'with invalid input data' do
       let(:title) { '' }
 
-      specify do
-        expect { subject }.not_to change(task, :title)
-        expect(response.status).to eq 422
-      end
+      it_behaves_like "task's blank title"
     end
 
     context 'with correct input data' do
@@ -61,25 +65,22 @@ RSpec.describe TasksController, type: :controller do
   describe 'GET #index' do
     let(:subject) { get :index }
 
-    context 'when less than per page are shown' do
-      let!(:task) { create(:task, title: 'Foo', tags: [tag]) }
-      let!(:tag) { create(:tag, name: 'FooTag') }
+    let(:tag) { create(:tag) }
+    let!(:task1) { create(:task, title: 'Foo', tags: [tag]) }
+    let!(:task2) { create(:task, title: 'Bar') }
 
+    context 'when less than per page are shown' do
       specify do
-        # TODO test it
-        subject.body
+        expect(subject.body).to have_json_size(2).at_path('data')
         expect(response.status).to eq 200
       end
     end
 
     context 'when more than per page are shown' do
-      let!(:task1) { create(:task, title: 'Foo') }
-      let!(:task2) { create(:task, title: 'Bar') }
-
       specify do
         stub_const("TasksController::INDEX_PER_PAGE", 1)
 
-        subject.body
+        expect(subject.body).to have_json_size(1).at_path("data")
         expect(response.status).to eq 200
       end
     end
@@ -97,7 +98,7 @@ RSpec.describe TasksController, type: :controller do
           expect { subject }
             .to change(Tag, :count).by(1)
             .and change { task.tags.count }.by(1)
-          expect(response.status).to eq 201
+          expect(response.status).to eq 200
         end
       end
 
@@ -108,7 +109,7 @@ RSpec.describe TasksController, type: :controller do
           expect { subject }
             .to change(Tag, :count).by(0)
             .and change { task.tags.count }.by(1)
-          expect(response.status).to eq 201
+          expect(response.status).to eq 200
         end
       end
     end
@@ -120,17 +121,16 @@ RSpec.describe TasksController, type: :controller do
         expect { subject }
           .to change(Tag, :count).by(0)
           .and change { task.tags.count }.by(0)
-        expect(response.status).to eq 422
+
+        body = %({"errors":[{"title":"Name can't be blank", "status": "422", "source":{"pointer":"data/attributes/tags/name"}}]})
+        expect(subject.body).to be_json_eql(body)
       end
     end
 
     context 'when provided task is not found' do
       let(:id) { -1 }
 
-      specify do
-        expect { subject }.not_to change(Task, :count)
-        expect(response.status).to eq 404
-      end
+      it_behaves_like 'not existing task provided'
     end
   end
 
@@ -140,18 +140,19 @@ RSpec.describe TasksController, type: :controller do
     context 'when provided the id of not existing skill' do
       let(:id) { -1 }
 
-      specify do
-        expect { subject }.not_to change(Task, :count)
-        expect(response.status).to eq 404
-      end
+      it_behaves_like 'not existing task provided'
     end
 
     context 'when provided id of the existing skill' do
-      let!(:task) { create(:task, title: 'Foo') }
+      let!(:tag) { create(:tag) }
+      let!(:task) { create(:task, title: 'Foo', tags: [tag]) }
       let(:id) { task.id }
 
       specify do
-        expect { subject }.to change(Task, :count).by(-1)
+        expect { subject }
+          .to change(Task, :count).by(-1)
+          .and change(TasksTag, :count).by(-1)
+          .and change(Tag, :count).by(0)
         expect(response.status).to eq 200
       end
     end

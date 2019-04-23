@@ -5,7 +5,7 @@ class Task < ApplicationRecord
   validate :tags_limits
 
   has_many :tasks_tags
-  has_many :tags, through: :tasks_tags
+  has_many :tags, through: :tasks_tags, dependent: :destroy
 
   private
 

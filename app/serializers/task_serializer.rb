@@ -1,5 +1,7 @@
 class TaskSerializer < ActiveModel::Serializer
-  attributes :id, :title, :tags
+  attributes :id, :title, :tags, :updated_at, :created_at
 
-  has_many :tags, serializer: TagSerializer
+  def tags
+    self.object.tags.map {|tag| {name: tag.name}}
+  end
 end
