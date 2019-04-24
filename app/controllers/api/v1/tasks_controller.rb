@@ -25,9 +25,9 @@ class Api::V1::TasksController < ApplicationController
   def index
     tasks = Task.all
     paginate json: tasks,
-             each_serializer: TaskSerializer,
              per_page: per_page,
-             status: :ok
+             status: :ok,
+             include: 'tags'
   end
 
   def tag
