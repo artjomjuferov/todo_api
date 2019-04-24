@@ -8,17 +8,17 @@ class TasksController < ApplicationController
     if @task.valid?
       render json: @task, serializer: TaskSerializer, status: '201'
     else
-      render json: {errors: task_attribute_errors}
+      render json: ErrorServices::TaskAttributes.new(@task)
     end
   end
 
   def update
-    return task_not_found unless @task
+    return render json: ErrorServices::TaskNotFound.new unless @task
     @task.update(title: params[:title])
     if @task.valid?
       render json: @task, serializer: TaskSerializer, status: '200'
     else
-      render json: {errors: task_attribute_errors}
+      render json: ErrorServices::TaskAttributes.new(@task)
     end
   end
 
@@ -31,18 +31,18 @@ class TasksController < ApplicationController
   end
 
   def tag
-    return task_not_found unless @task
+    return render json: ErrorServices::TaskNotFound.new unless @task
     set_tag
     if @tag.valid?
       @task.tags << @tag unless @task.tags.include?(@tag)
       render json: @task, serializer: TaskSerializer, status: '200'
     else
-      render json: {errors: tag_attribute_errors}
+      render json: ErrorServices::TagAttributes.new(@tag)
     end
   end
 
   def destroy
-    return task_not_found unless @task
+    return render json: ErrorServices::TaskNotFound.new unless @task
     @task.destroy
     render json: @task, serializer: TaskSerializer, status: '200'
   end
@@ -59,43 +59,5 @@ class TasksController < ApplicationController
 
   def set_tag
     @tag = Tag.find_or_create_by(name: params[:name])
-  end
-
-  def task_attribute_errors
-    @task.errors.map do |field, message|
-      {
-        title: "#{field.to_s.humanize} #{message}",
-        status: '422',
-        source: {
-          pointer: "data/attributes/#{field}"
-        }
-      }
-    end
-  end
-
-  def tag_attribute_errors
-    @tag.errors.map do |field, message|
-      {
-        title: "#{field.to_s.humanize} #{message}",
-        status: '422',
-        source: {
-          pointer: "data/attributes/tags/#{field}"
-        }
-      }
-    end
-  end
-
-  def task_not_found
-    render json: {
-      errors: [
-        {
-          title: 'Task does not exist',
-          status: '404',
-          source: {
-            pointer: 'data/id'
-          }
-        }
-      ]
-    }
   end
 end
