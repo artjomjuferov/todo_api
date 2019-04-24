@@ -1,5 +1,4 @@
 class ErrorServices::TagAttributes < ErrorService
-
   private
 
   def errors

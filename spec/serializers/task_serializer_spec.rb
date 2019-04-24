@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe TaskSerializer, type: :serializer do
+  subject { TaskSerializer.new(task).to_json }
+
   let(:tag) { build_stubbed(:tag, name: 'Bar') }
   let(:task) { build_stubbed(:task, title: 'Foo', tags: [tag]) }
-
-  subject { TaskSerializer.new(task).to_json }
 
   specify do
     names = %({"title":"Foo", "tags":[{"name":"Bar"}]})

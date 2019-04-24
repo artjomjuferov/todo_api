@@ -1,5 +1,4 @@
 class ErrorServices::TaskAttributes < ErrorService
-
   private
 
   def errors
