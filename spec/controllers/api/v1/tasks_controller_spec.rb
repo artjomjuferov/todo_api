@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe TasksController, type: :controller do
+RSpec.describe Api::V1::TasksController, type: :controller do
   shared_examples 'not existing task provided' do
     specify do
       body = %({"errors":[{"title":"Task does not exist", "status": "404", "source":{"pointer":"data/id"}}]})
@@ -78,7 +78,7 @@ RSpec.describe TasksController, type: :controller do
 
     context 'when more than per page are shown' do
       specify do
-        stub_const("TasksController::INDEX_PER_PAGE", 1)
+        stub_const("Api::V1::TasksController::INDEX_PER_PAGE", 1)
 
         expect(subject.body).to have_json_size(1).at_path("data")
         expect(response.status).to eq 200
